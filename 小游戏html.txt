@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>迷宫探险小游戏</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #f1f1f1;
+            padding: 20px;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 1000px;
+            width: 100%;
+            gap: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            background: linear-gradient(to right, #4cc9f0, #4361ee);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 5px;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #a5b4fc;
+            margin-bottom: 20px;
+        }
+        
+        .game-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            width: 100%;
+        }
+        
+        .game-area {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        
+        #gameCanvas {
+            display: block;
+            background-color: #0d1525;
+        }
+        
+        .game-ui {
+            display: flex;
+            flex-direction: column;
+            min-width: 250px;
+            max-width: 320px;
+            gap: 20px;
+        }
+        
+        .panel {
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(76, 201, 240, 0.2);
+        }
+        
+        .panel h2 {
+            color: #4cc9f0;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+            border-bottom: 2px solid rgba(76, 201, 240, 0.3);
+            padding-bottom: 8px;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #f1f5f9;
+        }
+        
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .key-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .key {
+            background: #1e293b;
+            border: 2px solid #334155;
+            border-radius: 8px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: #cbd5e1;
+        }
+        
+        .key.up {
+            grid-column: 2;
+            grid-row: 1;
+        }
+        
+        .key.left {
+            grid-column: 1;
+            grid-row: 2;
+        }
+        
+        .key.down {
+            grid-column: 2;
+            grid-row: 2;
+        }
+        
+        .key.right {
+            grid-column: 3;
+            grid-row: 2;
+        }
+        
+        .buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 10px;
+        }
+        
+        button {
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        #startBtn {
+            background: linear-gradient(to right, #4cc9f0, #4361ee);
+            color: white;
+        }
+        
+        #startBtn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(67, 97, 238, 0.4);
+        }
+        
+        #resetBtn {
+            background: rgba(30, 41, 59, 0.9);
+            color: #cbd5e1;
+            border: 2px solid #475569;
+        }
+        
+        #resetBtn:hover {
+            background: rgba(51, 65, 85, 0.9);
+            transform: translateY(-2px);
+        }
+        
+        .instructions {
+            line-height: 1.6;
+            color: #cbd5e1;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+            margin-top: 10px;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        
+        .game-status {
+            font-size: 1.3rem;
+            text-align: center;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 5px;
+            font-weight: bold;
+        }
+        
+        .level-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .level-btn {
+            flex: 1;
+            padding: 10px;
+            background: rgba(30, 41, 59, 0.7);
+            color: #cbd5e1;
+            border: 1px solid #475569;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .level-btn:hover {
+            background: rgba(51, 65, 85, 0.9);
+        }
+        
+        .level-btn.active {
+            background: linear-gradient(to right, #4cc9f0, #4361ee);
+            color: white;
+            border-color: #4361ee;
+        }
+        
+        footer {
+            margin-top: 20px;
+            text-align: center;
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .game-wrapper {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .game-ui {
+                max-width: 100%;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>迷宫探险</h1>
+            <p class="subtitle">控制角色找到出口，躲避障碍，挑战最快时间！</p>
+        </header>
+        
+        <div class="game-wrapper">
+            <div class="game-area">
+                <canvas id="gameCanvas" width="600" height="600"></canvas>
+            </div>
+            
+            <div class="game-ui">
+                <div class="panel">
+                    <h2>游戏状态</h2>
+                    <div class="stats">
+                        <div class="stat-item">
+                            <div class="stat-label">当前关卡</div>
+                            <div id="level" class="stat-value">1</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">得分</div>
+                            <div id="score" class="stat-value">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">时间</div>
+                            <div id="time" class="stat-value">0s</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">移动次数</div>
+                            <div id="moves" class="stat-value">0</div>
+                        </div>
+                    </div>
+                    <div id="status" class="game-status">点击开始游戏</div>
+                </div>
+                
+                <div class="panel">
+                    <h2>关卡选择</h2>
+                    <div class="level-buttons">
+                        <button class="level-btn active" data-level="1">简单</button>
+                        <button class="level-btn" data-level="2">普通</button>
+                        <button class="level-btn" data-level="3">困难</button>
+                    </div>
+                </div>
+                
+                <div class="panel">
+                    <h2>游戏控制</h2>
+                    <div class="buttons">
+                        <button id="startBtn">开始游戏</button>
+                        <button id="resetBtn">重置游戏</button>
+                    </div>
+                    
+                    <div class="controls">
+                        <h3>方向控制</h3>
+                        <div class="key-controls">
+                            <div class="key up">↑</div>
+                            <div class="key left">←</div>
+                            <div class="key down">↓</div>
+                            <div class="key right">→</div>
+                        </div>
+                        <p style="font-size: 0.9rem; color: #94a3b8; margin-top: 5px;">也可以使用键盘方向键或WASD控制</p>
+                    </div>
+                </div>
+                
+                <div class="panel">
+                    <h2>游戏说明</h2>
+                    <div class="instructions">
+                        <p>控制<span style="color:#4cc9f0">蓝色方块</span>找到<span style="color:#4ade80">绿色出口</span>，避开<span style="color:#f87171">红色障碍</span>。</p>
+                        <ul>
+                            <li>每次成功通关获得100分</li>
+                            <li>每关限制时间内完成获得时间奖励分</li>
+                            <li>碰到障碍会扣分并返回起点</li>
+                            <li>通过所有3个关卡赢得游戏</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>迷宫探险小游戏 | 使用HTML5 Canvas和JavaScript制作</p>
+        </footer>
+    </div>
+
+    <script>
+        // 获取DOM元素
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const startBtn = document.getElementById('startBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const levelBtns = document.querySelectorAll('.level-btn');
+        const levelDisplay = document.getElementById('level');
+        const scoreDisplay = document.getElementById('score');
+        const timeDisplay = document.getElementById('time');
+        const movesDisplay = document.getElementById('moves');
+        const statusDisplay = document.getElementById('status');
+        
+        // 游戏变量
+        let gameRunning = false;
+        let gameTime = 0;
+        let score = 0;
+        let moves = 0;
+        let currentLevel = 1;
+        let timerInterval = null;
+        let player = { x: 0, y: 0, size: 20 };
+        let exit = { x: 0, y: 0, size: 20 };
+        let obstacles = [];
+        let mazeGrid = [];
+        const gridSize = 20;
+        const gridWidth = canvas.width / gridSize;
+        const gridHeight = canvas.height / gridSize;
+        
+        // 关卡配置
+        const levelConfigs = {
+            1: { 
+                name: "简单", 
+                timeLimit: 60, 
+                obstacleCount: 8,
+                mazeComplexity: 0.1
+            },
+            2: { 
+                name: "普通", 
+                timeLimit: 45, 
+                obstacleCount: 15,
+                mazeComplexity: 0.15
+            },
+            3: { 
+                name: "困难", 
+                timeLimit: 30, 
+                obstacleCount: 25,
+                mazeComplexity: 0.2
+            }
+        };
+        
+        // 颜色定义
+        const colors = {
+            background: "#0d1525",
+            player: "#4cc9f0",
+            exit: "#4ade80",
+            obstacle: "#f87171",
+            wall: "#1e3a8a",
+            path: "#1e293b",
+            gridLine: "#334155"
+        };
+        
+        // 初始化游戏
+        function initGame() {
+            // 重置游戏状态
+            gameTime = 0;
+            moves = 0;
+            updateDisplay();
+            
+            // 生成迷宫网格
+            generateMaze();
+            
+            // 设置玩家和出口位置
+            player.x = gridSize;
+            player.y = gridSize;
+            
+            // 确保出口在右下角区域
+            exit.x = canvas.width - gridSize * 2;
+            exit.y = canvas.height - gridSize * 2;
+            
+            // 生成障碍物
+            generateObstacles();
+            
+            // 绘制初始状态
+            drawGame();
+            
+            statusDisplay.textContent = "使用方向键移动角色";
+            statusDisplay.style.color = "#fbbf24";
+        }
+        
+        // 生成迷宫网格
+        function generateMaze() {
+            mazeGrid = [];
+            const complexity = levelConfigs[currentLevel].mazeComplexity;
+            
+            // 初始化网格
+            for (let x = 0; x < gridWidth; x++) {
+                mazeGrid[x] = [];
+                for (let y = 0; y < gridHeight; y++) {
+                    // 边界是墙
+                    if (x === 0 || y === 0 || x === gridWidth - 1 || y === gridHeight - 1) {
+                        mazeGrid[x][y] = 1; // 墙
+                    } else {
+                        // 随机生成墙，基于复杂度
+                        mazeGrid[x][y] = Math.random() < complexity ? 1 : 0;
+                    }
+                }
+            }
+            
+            // 确保起点和终点是通路
+            const playerGridX = Math.floor(player.x / gridSize);
+            const playerGridY = Math.floor(player.y / gridSize);
+            const exitGridX = Math.floor(exit.x / gridSize);
+            const exitGridY = Math.floor(exit.y / gridSize);
+            
+            mazeGrid[playerGridX][playerGridY] = 0;
+            mazeGrid[exitGridX][exitGridY] = 0;
+            
+            // 确保起点和终点周围是通路
+            for (let dx = -1; dx <= 1; dx++) {
+                for (let dy = -1; dy <= 1; dy++) {
+                    if (playerGridX + dx >= 0 && playerGridX + dx < gridWidth && 
+                        playerGridY + dy >= 0 && playerGridY + dy < gridHeight) {
+                        mazeGrid[playerGridX + dx][playerGridY + dy] = 0;
+                    }
+                    
+                    if (exitGridX + dx >= 0 && exitGridX + dx < gridWidth && 
+                        exitGridY + dy >= 0 && exitGridY + dy < gridHeight) {
+                        mazeGrid[exitGridX + dx][exitGridY + dy] = 0;
+                    }
+                }
+            }
+        }
+        
+        // 生成障碍物
+        function generateObstacles() {
+            obstacles = [];
+            const obstacleCount = levelConfigs[currentLevel].obstacleCount;
+            
+            for (let i = 0; i < obstacleCount; i++) {
+                let obstacle;
+                let validPosition = false;
+                
+                // 尝试找到一个有效位置
+                for (let attempts = 0; attempts < 100 && !validPosition; attempts++) {
+                    const x = Math.floor(Math.random() * (gridWidth - 4) + 2) * gridSize;
+                    const y = Math.floor(Math.random() * (gridHeight - 4) + 2) * gridSize;
+                    
+                    // 确保不在玩家或出口位置
+                    if ((x === player.x && y === player.y) || (x === exit.x && y === exit.y)) {
+                        continue;
+                    }
+                    
+                    // 确保不在墙上
+                    const gridX = Math.floor(x / gridSize);
+                    const gridY = Math.floor(y / gridSize);
+                    
+                    if (mazeGrid[gridX][gridY] === 1) {
+                        continue;
+                    }
+                    
+                    // 确保不与其他障碍物重叠
+                    let overlapping = false;
+                    for (let obs of obstacles) {
+                        if (Math.abs(obs.x - x) < gridSize && Math.abs(obs.y - y) < gridSize) {
+                            overlapping = true;
+                            break;
+                        }
+                    }
+                    
+                    if (!overlapping) {
+                        obstacle = { x, y, size: gridSize };
+                        validPosition = true;
+                    }
+                }
+                
+                if (obstacle) {
+                    obstacles.push(obstacle);
+                }
+            }
+        }
+        
+        // 绘制游戏
+        function drawGame() {
+            // 清空画布
+            ctx.fillStyle = colors.background;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 绘制迷宫
+            drawMaze();
+            
+            // 绘制出口
+            ctx.fillStyle = colors.exit;
+            ctx.fillRect(exit.x, exit.y, exit.size, exit.size);
+            ctx.strokeStyle = "#22c55e";
+            ctx.lineWidth = 2;
+            ctx.strokeRect(exit.x, exit.y, exit.size, exit.size);
+            
+            // 绘制障碍物
+            obstacles.forEach(obstacle => {
+                ctx.fillStyle = colors.obstacle;
+                ctx.fillRect(obstacle.x, obstacle.y, obstacle.size, obstacle.size);
+                ctx.strokeStyle = "#dc2626";
+                ctx.lineWidth = 2;
+                ctx.strokeRect(obstacle.x, obstacle.y, obstacle.size, obstacle.size);
+                
+                // 添加内部图案
+                ctx.fillStyle = "#fca5a5";
+                ctx.fillRect(obstacle.x + 5, obstacle.y + 5, obstacle.size - 10, obstacle.size - 10);
+            });
+            
+            // 绘制玩家
+            ctx.fillStyle = colors.player;
+            ctx.fillRect(player.x, player.y, player.size, player.size);
+            
+            // 添加玩家内部细节
+            ctx.fillStyle = "#a5f3fc";
+            ctx.fillRect(player.x + 5, player.y + 5, player.size - 10, player.size - 10);
+            
+            // 添加玩家眼睛
+            ctx.fillStyle = "#0c4a6e";
+            ctx.fillRect(player.x + 7, player.y + 7, 4, 4);
+            ctx.fillRect(player.x + player.size - 11, player.y + 7, 4, 4);
+            
+            // 绘制网格线
+            ctx.strokeStyle = colors.gridLine;
+            ctx.lineWidth = 0.5;
+            
+            for (let x = 0; x <= canvas.width; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            
+            for (let y = 0; y <= canvas.height; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+        }
+        
+        // 绘制迷宫
+        function drawMaze() {
+            for (let x = 0; x < gridWidth; x++) {
+                for (let y = 0; y < gridHeight; y++) {
+                    if (mazeGrid[x][y] === 1) {
+                        ctx.fillStyle = colors.wall;
+                        ctx.fillRect(x * gridSize, y * gridSize, gridSize, gridSize);
+                        
+                        // 添加纹理
+                        ctx.fillStyle = "#1e40af";
+                        ctx.fillRect(x * gridSize + 2, y * gridSize + 2, gridSize - 4, gridSize - 4);
+                    } else {
+                        ctx.fillStyle = colors.path;
+                        ctx.fillRect(x * gridSize, y * gridSize, gridSize, gridSize);
+                    }
+                }
+            }
+        }
+        
+        // 移动玩家
+        function movePlayer(dx, dy) {
+            if (!gameRunning) return;
+            
+            const newX = player.x + dx * gridSize;
+            const newY = player.y + dy * gridSize;
+            
+            // 检查边界
+            if (newX < 0 || newY < 0 || newX + player.size > canvas.width || newY + player.size > canvas.height) {
+                return;
+            }
+            
+            // 检查是否撞墙
+            const gridX = Math.floor(newX / gridSize);
+            const gridY = Math.floor(newY / gridSize);
+            
+            if (mazeGrid[gridX][gridY] === 1) {
+                return;
+            }
+            
+            // 更新位置
+            player.x = newX;
+            player.y = newY;
+            moves++;
+            
+            // 检查是否碰到障碍物
+            for (let obstacle of obstacles) {
+                if (player.x === obstacle.x && player.y === obstacle.y) {
+                    score = Math.max(0, score - 20);
+                    player.x = gridSize;
+                    player.y = gridSize;
+                    updateDisplay();
+                    drawGame();
+                    statusDisplay.textContent = "碰到障碍！扣20分，返回起点";
+                    statusDisplay.style.color = colors.obstacle;
+                    return;
+                }
+            }
+            
+            // 检查是否到达出口
+            if (player.x === exit.x && player.y === exit.y) {
+                levelComplete();
+                return;
+            }
+            
+            updateDisplay();
+            drawGame();
+        }
+        
+        // 关卡完成
+        function levelComplete() {
+            // 计算得分
+            const timeBonus = Math.max(0, levelConfigs[currentLevel].timeLimit - gameTime) * 5;
+            score += 100 + timeBonus;
+            
+            statusDisplay.textContent = `关卡完成！获得${100 + timeBonus}分`;
+            statusDisplay.style.color = colors.exit;
+            
+            // 如果还有下一关
+            if (currentLevel < 3) {
+                currentLevel++;
+                levelDisplay.textContent = currentLevel;
+                
+                // 更新关卡按钮状态
+                levelBtns.forEach(btn => {
+                    if (parseInt(btn.dataset.level) === currentLevel) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                // 短暂延迟后进入下一关
+                setTimeout(() => {
+                    statusDisplay.textContent = `进入第${currentLevel}关：${levelConfigs[currentLevel].name}`;
+                    statusDisplay.style.color = "#fbbf24";
+                    initGame();
+                }, 1500);
+            } else {
+                // 游戏通关
+                gameRunning = false;
+                clearInterval(timerInterval);
+                statusDisplay.textContent = `恭喜通关！最终得分：${score}`;
+                statusDisplay.style.color = "#c084fc";
+                startBtn.textContent = "重新开始";
+            }
+            
+            updateDisplay();
+        }
+        
+        // 更新显示
+        function updateDisplay() {
+            scoreDisplay.textContent = score;
+            timeDisplay.textContent = `${gameTime}s`;
+            movesDisplay.textContent = moves;
+        }
+        
+        // 开始游戏
+        function startGame() {
+            if (gameRunning) {
+                // 如果游戏已经在运行，重新开始
+                clearInterval(timerInterval);
+                gameRunning = false;
+                startBtn.textContent = "开始游戏";
+                initGame();
+                return;
+            }
+            
+            gameRunning = true;
+            startBtn.textContent = "暂停游戏";
+            statusDisplay.textContent = "游戏进行中...";
+            statusDisplay.style.color = colors.player;
+            
+            // 启动计时器
+            timerInterval = setInterval(() => {
+                gameTime++;
+                updateDisplay();
+                
+                // 检查时间是否用完
+                if (gameTime >= levelConfigs[currentLevel].timeLimit) {
+                    clearInterval(timerInterval);
+                    gameRunning = false;
+                    score = Math.max(0, score - 50);
+                    statusDisplay.textContent = "时间到！游戏结束，扣50分";
+                    statusDisplay.style.color = colors.obstacle;
+                    startBtn.textContent = "重新开始";
+                    updateDisplay();
+                }
+            }, 1000);
+            
+            drawGame();
+        }
+        
+        // 重置游戏
+        function resetGame() {
+            clearInterval(timerInterval);
+            gameRunning = false;
+            currentLevel = 1;
+            score = 0;
+            gameTime = 0;
+            moves = 0;
+            
+            // 更新关卡按钮状态
+            levelBtns.forEach(btn => {
+                if (parseInt(btn.dataset.level) === 1) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            
+            startBtn.textContent = "开始游戏";
+            levelDisplay.textContent = currentLevel;
+            initGame();
+        }
+        
+        // 键盘控制
+        document.addEventListener('keydown', (e) => {
+            if (!gameRunning) return;
+            
+            switch(e.key) {
+                case 'ArrowUp':
+                case 'w':
+                case 'W':
+                    movePlayer(0, -1);
+                    break;
+                case 'ArrowDown':
+                case 's':
+                case 'S':
+                    movePlayer(0, 1);
+                    break;
+                case 'ArrowLeft':
+                case 'a':
+                case 'A':
+                    movePlayer(-1, 0);
+                    break;
+                case 'ArrowRight':
+                case 'd':
+                case 'D':
+                    movePlayer(1, 0);
+                    break;
+            }
+        });
+        
+        // 按钮事件监听
+        startBtn.addEventListener('click', startGame);
+        resetBtn.addEventListener('click', resetGame);
+        
+        // 关卡选择
+        levelBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (gameRunning) return;
+                
+                const selectedLevel = parseInt(btn.dataset.level);
+                currentLevel = selectedLevel;
+                levelDisplay.textContent = currentLevel;
+                
+                // 更新活动按钮样式
+                levelBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                initGame();
+            });
+        });
+        
+        // 初始化游戏
+        initGame();
+        
+        // 添加屏幕控制按钮
+        const keyButtons = document.querySelectorAll('.key');
+        keyButtons.forEach(key => {
+            key.addEventListener('click', function() {
+                if (!gameRunning) return;
+                
+                const direction = this.classList[1];
+                switch(direction) {
+                    case 'up':
+                        movePlayer(0, -1);
+                        break;
+                    case 'down':
+                        movePlayer(0, 1);
+                        break;
+                    case 'left':
+                        movePlayer(-1, 0);
+                        break;
+                    case 'right':
+                        movePlayer(1, 0);
+                        break;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
